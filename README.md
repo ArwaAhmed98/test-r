@@ -8,32 +8,12 @@
       * [Deployment Configuration Options](#deployment-configuration-options)
          * [Evaluation Installation](#evaluation-installation)
          * [External Databases Installation](#external-databases-installation)
-         * [S3 Filestorage Installation](#s3-filestorage-installation)
-            * [Long Term S3 IAM credentials](#long-term-s3-iam-credentials)
-            * [Manual mode with STS](#manual-mode-with-sts)
-            * [AWS S3 compatible provider](#aws-s3-compatible-provider)
-         * [Setting a custom Storage Class for System FileStorage RWX PVC-based installations](#setting-a-custom-storage-class-for-system-filestorage-rwx-pvc-based-installations)
-         * [PostgreSQL Installation](#postgresql-installation)
          * [Enabling Pod Disruption Budgets](#enabling-pod-disruption-budgets)
          * [Setting custom affinity and tolerations](#setting-custom-affinity-and-tolerations)
          * [Setting custom compute resource requirements at component level](#setting-custom-compute-resource-requirements-at-component-level)
          * [Setting custom storage resource requirements](#setting-custom-storage-resource-requirements)
-         * [Setting custom PriorityClassName](#setting-custom-priorityclassname)
-         * [Setting custom TopologySpreadConstraints](#setting-custom-topologyspreadconstraints)
-         * [Setting custom labels](#setting-custom-labels)
-         * [Setting custom Annotations](#setting-custom-annotations)
          * [Setting porta client to skip certificate verification](#setting-porta-client-to-skip-certificate-verification)
-      * [Reconciliation](#reconciliation)
-         * [Resources](#resources)
-         * [Backend replicas](#backend-replicas)
-         * [Apicast replicas](#apicast-replicas)
-         * [System replicas](#system-replicas)
-         * [Pod Disruption Budget](#pod-disruption-budget)
-      * [Upgrading 3scale](#upgrading-3scale)
-      * [3scale installation Backup and Restore](#3scale-installation-backup-and-restore)
-      * [Application Capabilities](#application-capabilities)
-      * [APIManager CRD reference](#apimanager-crd-reference)
-         * [CR Samples](#cr-samples)
+
 <!--te-->
 
 ## Installing 3scale
@@ -338,54 +318,6 @@ spec:
 See [APIManager reference](apimanager-reference.md) for a full list of
 attributes related to affinity and tolerations.
 
-## Setting custom compute resource requirements at component level
-
-Kubernetes [Compute Resource Requirements](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
-can be customized in a 3scale API Management solution through APIManager
-CR attributes in order to customize compute resource requirements (this is, CPU
-and Memory) assigned to a specific APIManager's component.
-
-For example, setting custom compute resource requirements for system-master's
-system-provider container, for backend-listener and for zync-database can be
-done in the following way:
-
-```yaml
-apiVersion: apps.3scale.net/v1alpha1
-kind: APIManager
-metadata:
-  name: example-apimanager
-spec:
-  backend:
-    listenerSpec:
-      resources:
-        requests:
-          memory: "150Mi"
-          cpu: "300m"
-        limits:
-          memory: "500Mi"
-          cpu: "1000m"
-  system:
-    appSpec:
-      providerContainerResources:
-        requests:
-          memory: "111Mi"
-          cpu: "222m"
-        limits:
-          memory: "333Mi"
-          cpu: "444m"
-  zync:
-    databaseResources:
-      requests:
-        memory: "111Mi"
-        cpu: "222m"
-      limits:
-        memory: "333Mi"
-        cpu: "444m"
-```
-
-See [APIManager reference](apimanager-reference.md) for a full list of
-attributes related to compute resource requirements.
-
 ## Setting custom storage resource requirements
 
 Openshift [storage resource requirements](https://docs.openshift.com/container-platform/4.5/storage/persistent_storage/persistent-storage-local.html#create-local-pvc_persistent-storage-local)
@@ -430,8 +362,6 @@ spec:
 Only when the underlying PersistentVolume's storageclass allows resizing, storage resource requirements can be modified after installation.
 Check [Expanding persistent volumes](https://docs.openshift.com/container-platform/4.5/storage/expanding-persistent-volumes.html) official doc for more information.
 
-
-
 ## Setting porta client to skip certificate verification
 Whenever a controller reconciles an object it creates a new porta client to make API calls. That client is configured to verify the server's certificate chain by default. For development/testing purposes, you may want the client to skip certificate verification when reconciling an object. This can be done using the annotation `insecure_skip_verify: true`, which can be added to the following objects:
 * ActiveDoc
@@ -444,101 +374,3 @@ Whenever a controller reconciles an object it creates a new porta client to make
 * Product
 * ProxyConfigPromote
 * Tenant
-
-## Reconciliation
-After 3scale API Management solution has been installed, 3scale Operator enables updating a given set
-of parameters from the custom resource in order to modify system configuration options.
-Modifications are performed in a hot swapping way, i.e., without stopping or shutting down the system.
-
-**Not all the parameters of the [APIManager CRD](apimanager-reference.md) are reconciliable**
-
-The following is a list of reconciliable parameters.
-
-* [Resources](#resources)
-* [Backend replicas](#backend-replicas)
-* [Apicast replicas](#apicast-replicas)
-* [System replicas](#system-replicas)
-* [Pod Disruption Budget](#pod-disruption-budget)
-
-#### Resources
-Resource limits and requests for all 3scale components
-
-```yaml
-apiVersion: apps.3scale.net/v1alpha1
-kind: APIManager
-metadata:
-  name: example-apimanager
-spec:
-  ResourceRequirementsEnabled: true/false
-```
-
-#### Backend replicas
-Backend components pod count
-
-```yaml
-apiVersion: apps.3scale.net/v1alpha1
-kind: APIManager
-metadata:
-  name: example-apimanager
-spec:
-  backend:
-    listenerSpec:
-      replicas: X
-    workerSpec:
-      replicas: Y
-    cronSpec:
-      replicas: Z
-```
-
-#### Apicast replicas
-Apicast staging and production components pod count
-
-```yaml
-apiVersion: apps.3scale.net/v1alpha1
-kind: APIManager
-metadata:
-  name: example-apimanager
-spec:
-  apicast:
-    productionSpec:
-      replicas: X
-    stagingSpec:
-      replicas: Z
-```
-
-#### System replicas
-System app and system sidekiq components pod count
-
-```yaml
-apiVersion: apps.3scale.net/v1alpha1
-kind: APIManager
-metadata:
-  name: example-apimanager
-spec:
-  system:
-    appSpec:
-      replicas: X
-    sidekiqSpec:
-      replicas: Z
-```
-
-#### Pod Disruption Budget
-Whether Pod Disruption Budgets are enabled for non-database DeploymentConfigs
-
-```yaml
-apiVersion: apps.3scale.net/v1alpha1
-kind: APIManager
-metadata:
-  name: example-apimanager
-spec:
-  ...
-  podDisruptionBudget:
-    enabled: true/false
-  ...
-```
-
-
-#### CR Samples
-
-* [\[1\]](../config/samples/apps_v1alpha1_apimanager_simple.yaml)
-* [\[2\]](cr_samples/apimanager/)
