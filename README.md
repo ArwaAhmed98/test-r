@@ -16,7 +16,7 @@
 
 <!--te-->
 
-## Installing 3scale
+
 
 This section will take you through installing and deploying the 3scale solution via the 3scale operator,
 using the [*APIManager*](apimanager-reference.md) custom resource.
